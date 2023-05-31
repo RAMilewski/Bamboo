@@ -1,0 +1,41 @@
+Updated Parametric Bamboo Trellis Joint
+
+This script uses the customizer to create joints for a bamboo garden trellis or plant cage
+Customizer is now included in OpenScad, and is quick, easy and reliable.  Even if you've never used OpenScad, give it a try.
+
+You can create polygonal plant cages with any number of sides from 3 to 10.  Pentagonal and hexagonal cages appear to offer the best compromise of cage volume to print time.
+
+Because the longer pieces of bamboo typically used for the vertical parts of the trellis tend to be larger in diameter than the shorter bamboo used for the horizontal parts, The horizontal and vertical parts of the joint can be independently tailored to match the diameter of the bamboo on hand.  Based on two growing season experience with this design, I strongly recommend printing this with TPU or another Flex filament.  
+
+There are two special case options when selecting the number of sides.  Selecting 1 will generate an "L-bracket" and selecting 2 will generate a "T-bracket". The L-bracket is useful for the ends of flat or zig-zag trellises. The T-bracket is included for completeness.
+
+The items in Secondary Settings can generally be left as is, but are exposed for the more adventurous souls confronting special challenges.
+
+Setting the top boolean to true creates a fitting with a closed end on the vertical tube, this works better for the top ring of most cages.  Joints with closed ends require a somewhat more careful match of tube and bamboo diameters when printed from non-flexible filaments.
+
+There are a number of options for securing the joints to the bamboo.  
+
+The most secure is to drill a small hole in the bamboo through the hole in the fitting and either secure with a small (#4 or 2.5mm) self tapping screw, or inserting a piece of garden wire through the hole and wrapping it around the fitting. This, however is the most time-consuming approach.
+
+Alternatively you can secure the bamboo with a zip-tie placed next to the collar at the ends of the fitting. You want zip-ties labeled UV-resistant and with a minimum of 40lbs tensile strength. Be sure to use a zip-tie gun to tighten as much as possible or the bamboo will slip out of the horizontal parts of the fitting as it shrinks a bit over time.
+
+Regardless of the method used to secure the bamboo adding a drop of UV-curing glue or gorilla glue will help secure the joint.  (I suspect SLA resin which also cures under UV may work as well, but I have not tested that).
+
+While using a zip-tie without glue is the least secure, using that method for verticals allows quick disassembly of a cage into rings and poles for more compact off-season storage.
+
+
+
+
+If you want to make a cage that fits outside a round pot of a given size, we use the formula for length of a side of a polygon circumscribing a circle:
+
+					     side = d * tan(pi/n)
+					     
+where d is pot diameter and n is the number of sides
+
+
+For a cage that fits inside the pot, we use the formula for a polygon inscribed in a circle:
+
+						side = d * sin(pi/n)
+						
+If the sides of your pot are not vertical, you'll want to decrease that size a bit.  Also remember that the length of a side includes the diameter of the vertical bamboo.
+
