@@ -122,11 +122,7 @@ collarDiaH  = diaH+shell*2+collarH*2;   // Diameter of collar on horizontal fitt
 heightH = diaH - liftH + shell;         // Height of horizontals (minus tie-wrap collars).        
 lenV = diaV * lengthV + diaH + shell;   // Length of vertical fittings
 collarDiaV  = diaV+shell*2+collarH*2;   // Diameter of collar on vertical fitting
-fudge2  = (fudge) * (diaV/2);           // Fudge factor for Hpart spacing. (pulled out of thin air)
-posScrH = lenH * 0.75;                   // Position of screw on horizontals
-PosCol2H = lenH/2 ;                     // Position of inner collar on horizontals 
-posScrV = screwV/100;                   // Position of screw on vertical
-PosCol2V = lenV*posScrV-diaScr*0.75;    // Position of inner collar on verticals 
+fudge2  = (fudge) * (diaV/2);           // Fudge factor for Hpart spacing. (pulled out of thin air)                  // Position of screw on horizontals
 angles  = (sides - 2) * 180;            // Sum of interior angles of the polygon
 angle = angles / sides;                 // Interior angle of a corner   
 
@@ -148,7 +144,7 @@ difference() {
     // ...and the space below the plane
         cyl (r = 1.5 * lenH, h = 10, anchor = TOP);
 }
-recolor("DeepSkyBlue",1 ) {
+recolor("DeepSkyBlue") {
     // Add top plate (or not)
     if (top == true) {
         difference() {
@@ -231,7 +227,7 @@ module Htube() {
                    position(CENTER)  tag("remove") cyl(d = diaH, h = lenH + collarW * 2);
                 }
                 //The screw hole
-                    right(diaV/2.5 - collarW/2 + posScrH)
+                    right(diaV/2.5 - collarW/2 + lenH * screwH/100)
                     tag("remove") cyl($fn = 32, d = diaScr, h = diaH + shell, anchor = BOT);    
            
     }
@@ -261,7 +257,7 @@ module Vtube () {
                 cyl(d = collarDiaV, h = collarW );
             }
             // The Screw Hole
-            up((lenV + collarW) * posScrV) tag("remove")
+            up((lenV + collarW) * screwV/100) tag("remove")
                 xcyl ($fn = 32, d = diaScr, h = diaV + shell, anchor = LEFT);    
     }
 }
