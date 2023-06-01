@@ -3,15 +3,13 @@
 	-----------------------------------------------------------------------------
 
 	Developed by:			Richard A. Milewski
-	
-	-----------------------------------------------------------------------------
+	Description:            Parametric Joint for Bamboo Trellises and Tomato Cages
 
-	Version:                2.2
+	Version:                2.3
 	Creation Date:          21 Apr 2021
 	Modification Dates:     25 May 2022 - Added Optional Top Plate
-                            26 May 2022 - Changed calculation of lenV
-	Email:                  Richard A. Milewski
-	Description:            Parametric Joint for Bamboo Trellises and Tomato Cages
+                            26 May 2022 - v2.2 Changed calculation of lenV
+                            30 MAY 2022 - v2.3 Added inner zip tie collar
     Copyright ©2021=2022 by Richard A. Milewski
     License - CC BY-NC      https://creativecommons.org/licenses/by-nc/3.0/ 
 
@@ -20,12 +18,10 @@
 /*#################################################################################*|
 
     NOTES
-        Joints are printed upside down.  Horizontals should support the bamboo.
+        Joints should be mounted upside down.  Horizontals should support the bamboo.
 
         If your printer supports it, I highly recommend printing these parts 
-        with flex filament (e.g. TPU)
-
-        If not, PETG appears to weather better than PLA.
+        with TPU filament. If not, PETG appears to weather better than PLA.
 
 \*#################################################################################*/
 
@@ -36,26 +32,28 @@
 \*#################################################################################*/
 
 /* [Primary Parameters] */
-// This part is for the topmost ring.
-top = false; // [true,false]
+// This part is for the topmost ring and has a top cap.  
+top = true; // [true,false]
 // Number of sides
 sides = 6;   // [1,2,3,4,5,6,7,8,9,10]   
 // Diameter of horizontal bamboo in mm
-diaH  = 12.5;  // [5:0.25:25] 
+diaH  = 11;  // [5:0.25:25] 
 // Diameter of vertical bamboo in mm
-diaV  = 11;  // [5:0.25:25]  
+diaV  = 12;  // [5:0.25:25]  
 
 
 /* [Secondary Parameters - CHANGE WITH CAUTION!] */
 
-// Tube shell thickness in mm
-shell = 1.5;    
+// Keep everything round | higher numbers increase rendering time.
+$fn = 36;
+// Tube shell thickness in mm  | 1 for flex, >=1.5 for rigid filament.
+shell = 1;    
 // Height in mm of zip tie collars above shell
 collarH = 1.5;  
 // Width in mm of zip tie collars
 collarW = 2;
 // Length of vertical above the horizontals in diameters 
-lengthV = 1.5;    
+lengthV = 2;    
 // Length of horizontals in diameters
 lengthH = 2.5;    
 // Hole position on horizontals (% of LengthH) 
@@ -66,14 +64,24 @@ screwV = 70;
 diaScr = 3;   
 // Fudge factor to adjust horizontal part separation
 fudge  = -0.25; 
+// Fudge factor to keep holes visible in preview  
+fudgeP = 0.5;
+
+/*  
+Tube Wrap parameters
+Higher numbers provide a more secure joint, lower reduce print time.
+35 is a recommended starting point for flex filament, 25 for rigid filament.
+Low values, with shell values >= 2 are ok if you use the wire-wrap method 
+to secure the bamboo to the joint.
+*/
 // Adjust the vertical tube wrap
-wrapV = 25;  // [0:35]
+wrapV = 35;  // [0:45]
 // Adjust the horizontal tube wrap
-wrapH = 25;  // [0:35]
-// Thickness of top plate
-topZ  = 1.5;
+wrapH = 35;  // [0:45]
+
 
 // Derived values
+topZ  = 1.5 * shell;                  // Thickness of optional top plate
 liftH = diaH * (wrapH/100);           // Vertical shift of horizontal tubes to adjust wrap
 shiftV = diaV * (wrapV/100);          // Horizontal shift of the clearing block to adjust vertical wrap
 lenH = diaH * lengthH;                // Length of horizontal fittings
@@ -82,11 +90,13 @@ heightH = diaH-liftH+shell;           // Height of horizontals (minus tire-wrap 
 lenV = diaV*lengthV + heightH;        // Length of vertical fittings
 collarDiaV  = diaV+shell+collarH*2;   // Diameter of collar on vertical fitting
 fudge2  = (fudge) * (diaV/2);         // Fudge factor for Hpart spacing. (pulled out of thin air)
-posScrH = screwH/100;                 // Postition of screw on horizontals
-posScrV = screwV/100;                 // Postition of screw on vertical
+posScrH = screwH/100;                 // Position of screw on horizontals
+PosCol2H = lenH*posScrH-diaScr*0.75;  // Position of inner collar on horizontals 
+posScrV = screwV/100;                 // Position of screw on vertical
+PosCol2V = lenV*posScrV-diaScr*0.75;  // Position of inner collar on horizontals 
 angles  = (sides - 2) * 180;          // Sum of interior angles of the polygon
 angle = angles / sides;               // Interior angle of a corner   
-fudgeP = 0.1;                          // Fudge factor to keep holes visible in preview  
+
 /*#################################################################################*|
 
     MAIN
@@ -102,7 +112,7 @@ difference() {
         }}
     // Clear the core of the vertical tube
     translate ([0, 0, -1])
-        cylinder ($fn = 64, d = diaV, h = lenV + 2);
+        cylinder (d = diaV, h = lenV + 2);
     // ...and the space below the plane
     translate ([-50,-50,-50])
         cube ([100,100,50]);
@@ -116,9 +126,6 @@ color("DeepSkyBlue",1 ) {
         }
     }
 }
-
-
-
 
 
 /*#################################################################################*|
@@ -153,11 +160,11 @@ module Hparts() {
         difference() {
             translate ([shiftV, -diaV/2-shell, liftH])
             rotate([0,90,90])
-                cylinder ($fn = 64, d = (diaH + 2*shell), h = diaV + 2*shell);
+                cylinder (d = (diaH + 2*shell), h = diaV + 2*shell);
 
             translate ([shiftV, -diaV/2-shell-1, liftH])
                 rotate([0,90,90])
-                    cylinder ($fn = 64, d = diaH, h = diaV + 2*shell+2);
+                    cylinder (d = diaH, h = diaV + 2*shell+2);
         }
     }
 }
@@ -182,18 +189,23 @@ module Htube() {
                union() {
                  // The tube
                  rotate([0,90,0])
-                    cylinder ($fn = 64, d = (diaH + 2*shell), h = lenH );
+                    cylinder (d = (diaH + 2*shell), h = lenH );
                 
                  // The zip tie collar  
                  translate ([lenH - collarW, 0, 0])
                     rotate([0,90,0])
-                        cylinder ($fn = 64, d = collarDiaH, h = collarW );
+                        cylinder (d = collarDiaH, h = collarW );
+
+                 // The inner zip tie collar  
+                 translate ([PosCol2H - collarW, 0, 0])
+                    rotate([0,90,0])
+                        cylinder (d = collarDiaH, h = collarW );
                }
                 union() {
                     // Clear he central core of the tube
                     translate([diaV/2-1,0,liftH])
                     rotate([0,90,0])
-                        cylinder ($fn = 64, d = diaH, h = lenH + 2);
+                        cylinder (d = diaH, h = lenH + 2);
                     
                     //The screw hole
                     translate([diaV/2 + ( lenH*posScrH ),0,0])
@@ -221,11 +233,17 @@ module Vtube () {
         union() {
             // The tube
             translate ([0, 0, 0])
-                cylinder ($fn = 64, d = (diaV + 2*shell), h = lenV);
+                cylinder (d = (diaV + 2*shell), h = lenV);
         
             // The zip tie collar
-            translate ([0, 0, lenV-collarW])
-                cylinder ($fn = 64, d = collarDiaV, h = collarW );
+            translate ([0, 0, lenV - collarW])
+                cylinder (d = collarDiaV, h = collarW );
+
+            // The inner zip tie collar  
+            translate ([0,0,PosCol2V - collarW])
+                rotate([0,0,0])
+                cylinder (d = collarDiaV, h = collarW );
+
         }              
             // The Screw Hole
             translate([0,0,lenV * posScrV])

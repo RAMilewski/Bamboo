@@ -13,6 +13,7 @@
 	                        02 Jun 2022 - Adjusted Secondary Parameters	
                             13 Jun 2022 - Revised lenH & lenV calculations
                             30 May 2023 - v3 Refactored for BOSL2 Library
+                            
    
     Copyright ©2021-2022 by Richard A. Milewski
     License - CC-BY-NC      https://creativecommons.org/licenses/by-nc/3.0/ 
