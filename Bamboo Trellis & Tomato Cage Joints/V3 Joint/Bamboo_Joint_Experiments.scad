@@ -1,5 +1,5 @@
 /*#################################################################################*\
-    Bamboo_Trellis_Joint_v3.0.scad
+    Bamboo_Trellis_Joint_v3.1.scad
 	-----------------------------------------------------------------------------
 
 	Developed by:			Richard A. Milewski
@@ -13,6 +13,7 @@
 	                        02 Jun 2022 - Adjusted Secondary Parameters	
                             13 Jun 2022 - Revised lenH & lenV calculations
                             30 May 2023 - v3 Refactored for BOSL2 Library
+                            02 Jun 2023 - v3.1 Improved H to V junction.
                             
    
     Copyright ©2021-2022 by Richard A. Milewski
@@ -54,7 +55,7 @@ include <BOSL2/std.scad>
 /* [Primary Parameters] */
 
 // This part is for the topmost ring and has a top cap
-top = true;  // [true,false]
+top = false;  // [true,false]
 // Number of sides
 sides = 1;   // [1,2,3,4,5,6,7,8,9,10]   
 
@@ -68,9 +69,9 @@ sides = 1;   // [1,2,3,4,5,6,7,8,9,10]
 */
 
 // Diameter of horizontal bamboo in mm
-diaH  = 24;  // [5:0.25:25]  
+diaH  = 22;  // [5:0.25:25]  
 // Diameter of vertical bamboo in mm
-diaV  = 24;  // [5:0.25:25]  
+diaV  = 10;  // [5:0.25:25]  
 
 
 /* [Secondary Parameters - CHANGE WITH CAUTION!] */ 
@@ -82,11 +83,11 @@ shell = 2;
 // Height in mm of zip tie collars above shell
 collarH = 1.5;  
 // Width in mm of zip tie collars
-collarW = 2;
+collarW = 1.5;
 // Length of vertical above the horizontals in vertical diameters 
 lengthV = 1.5;    
 // Length of horizontals in diameters
-lengthH = 1.5;    
+lengthH = 1.1;    
 // Hole position on horizontals (% of LengthH) 
 screwH = 70;
 // Hole positon on vertical (% of LengthV)
@@ -111,36 +112,36 @@ to secure the bamboo to the joint.
 // Adjust the vertical tube wrap
 wrapV = 45;  // [15:48]
 // Adjust the horizontal tube wrap
-wrapH = 40;  // [15:48]
+wrapH = 20;  // [15:48]
 
 
 // Derived values
-liftH = diaH * (wrapH/100);             // Vertical shift of horizontal tubes to adjust wrap
-shiftV = diaV * (wrapV/100);            // Horizontal shift of the clearing block to adjust vertical wrap
-lenH = diaH * lengthH + diaV + shell;   // Length of horizontal fittings
-collarDiaH  = diaH+shell*2+collarH*2;   // Diameter of collar on horizontal fittings
-heightH = diaH - liftH + shell;         // Height of horizontals (minus tie-wrap collars).        
-lenV = diaV * lengthV + diaH + shell;   // Length of vertical fittings
-collarDiaV  = diaV+shell*2+collarH*2;   // Diameter of collar on vertical fitting
-fudge2  = (fudge) * (diaV/2);           // Fudge factor for Hpart spacing. (pulled out of thin air)                  // Position of screw on horizontals
-angles  = (sides - 2) * 180;            // Sum of interior angles of the polygon
-angle = angles / sides;                 // Interior angle of a corner   
-
+liftH = diaH * (wrapH/100);                     // Vertical shift of horizontal tubes to adjust wrap
+shiftV = diaV * (wrapV/100);                    // Horizontal shift of the clearing block to adjust vertical wrap
+lenH = diaH * lengthH + diaV/2;                 // Length of horizontal fittings
+collarDiaH  = diaH+shell*2+collarH*2;           // Diameter of collar on horizontal fittings
+heightH = diaH - liftH + shell;                 // Height of horizontals (minus tie-wrap collars).        
+lenV = diaV * lengthV + diaH;                   // Length of vertical fittings
+collarDiaV  = diaV+shell*2+collarH*2;           // Diameter of collar on vertical fitting
+fudge2  = (fudge) * (diaV/2);                   // Fudge factor for Hpart spacing. (pulled out of thin air)                  // Position of screw on horizontals
+angles  = (sides - 2) * 180;                    // Sum of interior angles of the polygon
+angle = angles / sides;                         // Interior angle of a corner   
+r1 = min(diaH,diaV)/2;                          // Radius of the smaller tube.
+roundH = diaH/2.31;//min(r1, 2 * max(0,(diaH - diaV))); // Joint end rounding on Htube
 /*#################################################################################*|
 
     MAIN
 
 \*#################################################################################*/
 
-
 difference() {
     recolor("DeepSkyBlue" ) {
         union() {  // Combine the horizontals and the verticals
                 Hparts();
-                Vpart();
+                //Vpart();
         }}
     // Clear the Hpart bits from the core of the vertical tube
-        cyl (d = diaV, h = lenV + collarW, anchor = BOT);
+        //cyl (d = diaV, h = lenV + collarW, anchor = BOT);
     // ...and the space below the plane
         cyl (r = 1.5 * lenH, h = 10, anchor = TOP);
 }
@@ -156,8 +157,6 @@ recolor("DeepSkyBlue") {
 
 
 
-
-
 /*#################################################################################*|
 
     MODULES
@@ -168,6 +167,7 @@ recolor("DeepSkyBlue") {
 
 module Hparts() {
     if (sides > 2) {  // Polygonal or Zig-zag Trellis
+        
         translate ([0, -fudge2, 0])
             rotate(-angle/2,[0,0,1])
                 Hpart();
@@ -212,25 +212,27 @@ module Hpart () {
 
 module Htube() {
  
-    diff() {
-        translate([diaV/2.5,0,liftH])
+   
+       // #xcyl(d=diaH + 2*shell, h = diaV/2, rounding1 = roundH, anchor = CENTER+LEFT);  //ensure closure
+        diff() {
+            translate([diaV/2,0,liftH])
+                
+                    // The tube
+                    xcyl(d = (diaH + 2*shell), h = lenH, anchor = CENTER+LEFT) {
+                        // The end zip tie collar  
+                        attach(RIGHT) cyl(d = collarDiaH, h = collarW);
+                        // The inner zip tie collar  
+                        position(CENTER) left(collarW/2) xcyl(d = collarDiaH, h = collarW );
+                    // Clear he central core of the tube
+                
+                    yrot(90)
+                    position(CENTER)  tag("remove") cyl(d = diaH, h = lenH + collarW * 2);
+                    }
+                    //The screw hole
+                        right(diaV/2 + lenH * screwH/100)
+                        tag("remove") cyl($fn = 32, d = diaScr, h = diaH + shell, anchor = BOT);    
             
-                // The tube
-                xcyl(d = (diaH + 2*shell), h = lenH, anchor = CENTER+LEFT) {
-                    // The end zip tie collar  
-                    attach(RIGHT) cyl(d = collarDiaH, h = collarW);
-                    // The inner zip tie collar  
-                    position(CENTER) left(collarW/2) xcyl(d = collarDiaH, h = collarW );
-                // Clear he central core of the tube
-              
-                yrot(90)
-                   position(CENTER)  tag("remove") cyl(d = diaH, h = lenH + collarW * 2);
-                }
-                //The screw hole
-                    right(diaV/2.5 - collarW/2 + lenH * screwH/100)
-                    tag("remove") cyl($fn = 32, d = diaScr, h = diaH + shell, anchor = BOT);    
-           
-    }
+        }
     
 }
 
@@ -260,6 +262,10 @@ module Vtube () {
             up((lenV + collarW) * screwV/100) tag("remove")
                 xcyl ($fn = 32, d = diaScr, h = diaV + shell, anchor = LEFT);    
     }
+}
+
+module echo2(arg) {						// for debugging - puts space around the echo.
+	echo(str("\n\n", arg, "\n\n" ));
 }
 
 echo("*****");

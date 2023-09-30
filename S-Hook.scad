@@ -20,24 +20,39 @@ type = "square";     // ("round","square")
 // radius of first hook curve
 loop  =   12;   
 // angle of first hook curve
-arc   =  200;   
+arc   =  220;   
 // radius of second hook curve
-loop2  =   16;   
+loop2  =   5;   
+// false flips the second loop
+trueS = true;
 // angle of second hook curve
-arc2   =  230; 
+arc2   =  160; 
 // length of straight segment
-stem  =   25;   
+stem  =   20;   
 // width of hook
-width =    25;   // width of hook
+width =    3;   // width of hook
 
-flat  = 0.2;   // scale factor for hook cross section   1=round or square
+flat  = 1;   // scale factor for hook cross section
 
-round = 8;
+round = 4;
 
-hook(loop, arc, stem, width, flat);
-move = (loop+loop2);
-translate([move,-stem,0]) rotate([0,0,180])
-hook(loop2, arc2, stem, width, flat);
+if (trueS) s_hook(); else c_hook();
+
+
+module s_hook() {
+    hook(loop, arc, stem, width, flat);
+    move = loop + loop2;
+    translate([move,-stem,0]) rotate([180,180,0])
+        hook(loop2, arc2, 0, width, flat);
+}
+
+module c_hook() {
+     hook(loop, arc, stem, width, flat);
+    move = loop - loop2;
+    translate([move,-stem,0]) rotate([180,0,0])
+        hook(loop2, arc2, 0, width, flat);
+}
+
 
 
 module hook(loop, arc, stem, width, flat) {
@@ -45,19 +60,20 @@ module hook(loop, arc, stem, width, flat) {
     $fn = 64;
     halfStem = stem/2;
 
+    //First loop end
     rotate_extrude(angle=arc){
-       translate([loop,0,0]) scale([flat,1,1]) 
+       xmove(loop) scale([flat,1,1]) 
         if (type=="round") {circle(d=width);} 
         else {offset(r=width/round) offset(r=-width/round) square(width,center=true);}
     }
     //stem 
-    rotate([90,0,0]) translate([loop,0,0]) scale([flat,1,1])
-    if (type == "round") {cylinder(h=halfStem, d=width);} 
-    else { linear_extrude(height=halfStem) translate([0,0,stem/2])
+    xrot(90) xmove(loop) scale([flat,1,1])
+    if (type == "round") {cylinder(h=stem, d=width);} 
+    else { linear_extrude(height=stem) translate([0,0,stem/2])
             offset(r=width/round) offset(r=-width/round) square(width,center=true);}   
           
-    //round loop end
-    rotate([0,0,arc-180]) translate([-loop,0,0])  scale([flat,flat,1]) 
+    //Round the loop end
+    zrot(arc-180) xmove(-loop)  scale([flat,flat,1]) 
     if (type == "round") {sphere(d=width);} 
     else { cyl(h=width, d=width, rounding=width/round);}
     

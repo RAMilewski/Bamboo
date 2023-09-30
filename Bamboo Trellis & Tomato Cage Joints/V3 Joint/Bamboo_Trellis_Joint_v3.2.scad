@@ -1,11 +1,12 @@
 /*#################################################################################*\
-    Bamboo_Trellis_Joint_v3.0.scad
+    Bamboo_Trellis_Joint_v3.2.scad
 	-----------------------------------------------------------------------------
 
 	Developed by:			Richard A. Milewski
 	Description:            Parametric Joint for Bamboo Trellises and Tomato Cages
 
-	Version:                3.0
+	Version:                3.2
+
 	Creation Date:          21 Apr 2021
 	Modification Dates:     25 May 2022 - v2 Added Optional Top Plate
                             26 May 2022 - Changed calculation of lenV
@@ -13,6 +14,8 @@
 	                        02 Jun 2022 - Adjusted Secondary Parameters	
                             13 Jun 2022 - Revised lenH & lenV calculations
                             30 May 2023 - v3 Refactored for BOSL2 Library
+                            02 Jun 2023 - v3.1 Improved H to V junction.
+                            09 Jun 2023 - v3.2 More BOSL2 Refactoring.
                             
    
     Copyright ©2021-2022 by Richard A. Milewski
@@ -54,9 +57,9 @@ include <BOSL2/std.scad>
 /* [Primary Parameters] */
 
 // This part is for the topmost ring and has a top cap
-top = true;  // [true,false]
+top = false;  // [true,false]
 // Number of sides
-sides = 1;   // [1,2,3,4,5,6,7,8,9,10]   
+sides = 5;   // [1,2,3,4,5,6,7,8,9,10]   
 
 /*  ABOUT BAMBOO DIAMETERS
     Bamboo horizontals should be cut and then sorted so that the end diamters of each
@@ -68,9 +71,9 @@ sides = 1;   // [1,2,3,4,5,6,7,8,9,10]
 */
 
 // Diameter of horizontal bamboo in mm
-diaH  = 24;  // [5:0.25:25]  
+diaH  = 10;  // [5:0.25:25]  
 // Diameter of vertical bamboo in mm
-diaV  = 24;  // [5:0.25:25]  
+diaV  = 12;  // [5:0.25:25]  
 
 
 /* [Secondary Parameters - CHANGE WITH CAUTION!] */ 
@@ -78,6 +81,7 @@ diaV  = 24;  // [5:0.25:25]
 // Keep everything round | higher numbers increase rendering time.
 $fn = 36;
 // Tube shell thickness in mm  | 1 for flex, >=1.5 for rigid filament.
+// Use 2mm for flex if diaH > 15.
 shell = 2;    
 // Height in mm of zip tie collars above shell
 collarH = 1.5;  
@@ -115,23 +119,23 @@ wrapH = 40;  // [15:48]
 
 
 // Derived values
-liftH = diaH * (wrapH/100);             // Vertical shift of horizontal tubes to adjust wrap
-shiftV = diaV * (wrapV/100);            // Horizontal shift of the clearing block to adjust vertical wrap
-lenH = diaH * lengthH + diaV + shell;   // Length of horizontal fittings
-collarDiaH  = diaH+shell*2+collarH*2;   // Diameter of collar on horizontal fittings
-heightH = diaH - liftH + shell;         // Height of horizontals (minus tie-wrap collars).        
-lenV = diaV * lengthV + diaH + shell;   // Length of vertical fittings
-collarDiaV  = diaV+shell*2+collarH*2;   // Diameter of collar on vertical fitting
-fudge2  = (fudge) * (diaV/2);           // Fudge factor for Hpart spacing. (pulled out of thin air)                  // Position of screw on horizontals
-angles  = (sides - 2) * 180;            // Sum of interior angles of the polygon
-angle = angles / sides;                 // Interior angle of a corner   
-
+liftH = diaH * (wrapH/100);                     // Vertical shift of horizontal tubes to adjust wrap
+shiftV = diaV * (wrapV/100);                    // Horizontal shift of the clearing block to adjust vertical wrap
+lenH = diaH * lengthH + diaV/2;                 // Length of horizontal fittings
+collarDiaH  = diaH+shell*2+collarH*2;           // Diameter of collar on horizontal fittings
+heightH = diaH - liftH + shell;                 // Height of horizontals (minus tie-wrap collars).        
+lenV = diaV * lengthV + diaH;                   // Length of vertical fittings
+collarDiaV  = diaV+shell*2+collarH*2;           // Diameter of collar on vertical fitting
+fudge2  = (fudge) * (diaV/2);                   // Fudge factor for Hpart spacing. (pulled out of thin air)                  // Position of screw on horizontals
+angles  = (sides - 2) * 180;                    // Sum of interior angles of the polygon
+angle = angles / sides;                         // Interior angle of a corner   
+r1 = min(diaH,diaV)/2;                          // Radius of the smaller tube.
+roundH = min(r1, 2 * max(0,(diaH - diaV))); // Joint end rounding on Htube
 /*#################################################################################*|
 
     MAIN
 
 \*#################################################################################*/
-
 
 difference() {
     recolor("DeepSkyBlue" ) {
@@ -156,8 +160,6 @@ recolor("DeepSkyBlue") {
 
 
 
-
-
 /*#################################################################################*|
 
     MODULES
@@ -168,38 +170,30 @@ recolor("DeepSkyBlue") {
 
 module Hparts() {
     if (sides > 2) {  // Polygonal or Zig-zag Trellis
-        translate ([0, -fudge2, 0])
-            rotate(-angle/2,[0,0,1])
-                Hpart();
+        ymove(-fudge2)
+            zrot(-angle/2) Hpart();
 
-        translate ([0, fudge2, 0])
-            rotate(angle/2,[0,0,1])
-                Hpart();
+       ymove(fudge2)
+            zrot(angle/2)  Hpart();
     }     
     if (sides == 1) {Hpart();}  // Special case for L bracket
     if (sides == 2) {           // Special case for T bracket
-        translate ([shiftV, -fudge2, 0])
-        rotate(-90,[0,0,1])
-            Hpart();
-
-        translate ([shiftV, fudge2, 0])
-        rotate(90,[0,0,1])
-            Hpart();
+        
+        move([shiftV, -fudge2]) zrot(-90) Hpart();
+        move([shiftV, fudge2])  zrot(90)  Hpart();
 
         // Fill the gap across the vertical
         difference() {
-            translate ([shiftV, -diaV/2-shell, liftH])
-            rotate([0,90,90])
-                cylinder (d = (diaH + 2*shell), h = diaV + 2*shell);
+            move ([shiftV, -diaV/2-shell, liftH]) rotate([0,90,90])
+                cyl(d = (diaH + 2*shell), h = diaV + 2*shell);
 
-            translate ([shiftV, -diaV/2-shell-1, liftH])
-                rotate([0,90,90])
-                    cylinder (d = diaH, h = diaV + 2*shell+2);
+            move ([shiftV, -diaV/2-shell-1, liftH]) rotate([0,90,90])
+                cyl(d = diaH, h = diaV + 2*shell+2);
         }
     }
 }
 
-module Hpart () {
+module Hpart () { 
     
     difference() { // Slice off part of the tube
 
@@ -212,25 +206,27 @@ module Hpart () {
 
 module Htube() {
  
-    diff() {
-        translate([diaV/2.5,0,liftH])
+    up(liftH) 
+        xcyl(d=diaH + 2*shell, h = diaV/2, rounding1 = roundH, anchor = CENTER+LEFT);  //ensure closure
+        diff() {
+            translate([diaV/2,0,liftH])
+                
+                    // The tube
+                    xcyl(d = (diaH + 2*shell), h = lenH, anchor = CENTER+LEFT) {
+                        // The end zip tie collar  
+                        attach(RIGHT) cyl(d = collarDiaH, h = collarW);
+                        // The inner zip tie collar  
+                        position(CENTER) left(collarW/2) xcyl(d = collarDiaH, h = collarW );
+                    // Clear the central core of the tube
+                
+                    yrot(90)
+                    position(CENTER)  tag("remove") cyl(d = diaH, h = lenH + collarW * 2);
+                    }
+                    //The screw hole
+                        right(diaV/2 + lenH * screwH/100)
+                        tag("remove") cyl($fn = 32, d = diaScr, h = diaH + shell, anchor = BOT);    
             
-                // The tube
-                xcyl(d = (diaH + 2*shell), h = lenH, anchor = CENTER+LEFT) {
-                    // The end zip tie collar  
-                    attach(RIGHT) cyl(d = collarDiaH, h = collarW);
-                    // The inner zip tie collar  
-                    position(CENTER) left(collarW/2) xcyl(d = collarDiaH, h = collarW );
-                // Clear he central core of the tube
-              
-                yrot(90)
-                   position(CENTER)  tag("remove") cyl(d = diaH, h = lenH + collarW * 2);
-                }
-                //The screw hole
-                    right(diaV/2.5 - collarW/2 + lenH * screwH/100)
-                    tag("remove") cyl($fn = 32, d = diaScr, h = diaH + shell, anchor = BOT);    
-           
-    }
+        }
     
 }
 
@@ -260,6 +256,10 @@ module Vtube () {
             up((lenV + collarW) * screwV/100) tag("remove")
                 xcyl ($fn = 32, d = diaScr, h = diaV + shell, anchor = LEFT);    
     }
+}
+
+module echo2(arg) {						// for debugging - puts space around the echo.
+	echo(str("\n\n", arg, "\n\n" ));
 }
 
 echo("*****");
